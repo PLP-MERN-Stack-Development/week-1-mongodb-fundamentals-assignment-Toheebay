@@ -9,6 +9,8 @@ jobs:
     services:
       mongo:
         image: mongo:6.0
+        ports:
+          - 27017:27017
         options: >-
           --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
           --health-interval 10s
@@ -23,5 +25,15 @@ jobs:
         with:
           node-version: "20"
 
-      - run: npm install
-      - run: node queries.js
+      - name: Install dependencies
+        run: npm install
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          until mongosh --host localhost --eval "db.adminCommand('ping')"; do
+            echo "Waiting for MongoDB..."
+            sleep 2
+          done
+
+      - name: Run script
+        run: node queries.js
